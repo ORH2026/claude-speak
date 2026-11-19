@@ -69,6 +69,14 @@ Claude Code's dictation is controlled by its own `voice`/`voiceEnabled` settings
 
 Requirements: `jq`, `perl`, `bash`, and the platform's TTS backend (`say` is preinstalled on macOS; install espeak-ng with `pacman -S espeak-ng` on Arch or `apt install espeak-ng` on Debian/Ubuntu; Windows voices are built in, and `jq` is the only extra install next to Git for Windows).
 
+### Fish Audio voice on Windows (optional)
+
+`/speak-engine fish` switches Windows speech to [Fish Audio](https://fish.audio) (model `s2.1-pro-free` by default). The API key is read from the `FISH_API_KEY` user environment variable and never stored by the plugin. `/speak-engine voice <id>` picks a Fish voice, `/speak-engine cap <chars>` sets the daily character cap (default 20000), and `/speak-engine system` goes back to the built-in voice.
+
+- One request per reply, 25-second timeout, no retries. Any failure, a missing key, or going over the daily cap speaks that reply with the system voice instead.
+- Reply text is sent to Fish Audio's servers. When a reply mentions a code or PIN, every run of 3-8 digits is replaced with "number hidden" before sending.
+- Audio is played from memory; nothing is written to disk except the daily character count and a one-line note of which engine spoke last (no text).
+
 ### One-click toggle on Windows
 
 `scripts/windows/Toggle-ClaudeSpeak.ps1` flips the same on/off setting from outside Claude Code, stops current speech, and says "Claude voice on" or "Claude voice off". Point a desktop or taskbar shortcut at:
