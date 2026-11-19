@@ -9,7 +9,7 @@
 #
 # Supported backends:
 #   macos  — macOS `say`
-#   espeak — espeak-ng (or the older `espeak`) on Linux
+#   espeak — espeak-ng (or the older `espeak`, or Windows PowerShell) on Linux
 #   windows — built-in System.Speech (SAPI) via PowerShell, from Git Bash/MSYS
 
 WIN_LIST_VOICES='Add-Type -AssemblyName System.Speech; (New-Object System.Speech.Synthesis.SpeechSynthesizer).GetInstalledVoices() | Where-Object { $_.Enabled } | ForEach-Object { $_.VoiceInfo.Name }'

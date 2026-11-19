@@ -17,8 +17,9 @@ if (Test-Path $pidFile) {
     $speakerPid = (Get-Content $pidFile -ErrorAction SilentlyContinue) -replace '\D', ''
     Remove-Item $pidFile -ErrorAction SilentlyContinue
     if ($speakerPid) {
-        Get-Process -Id ([int]$speakerPid) -ErrorAction SilentlyContinue |
-            Where-Object { $_.ProcessName -eq 'powershell' } | Stop-Process -Force
+        Get-CimInstance Win32_Process -Filter "ProcessId=$speakerPid" |
+            Where-Object { $_.CommandLine -like '*windows-say.ps1*' } |
+            ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
     }
 }
 

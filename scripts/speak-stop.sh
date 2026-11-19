@@ -3,9 +3,10 @@
 # /toggle-speak when turning speech off, and by speak-say.sh before a new
 # reply starts so two replies never talk over each other.
 #
-# Windows: kills the PowerShell speaker recorded in speaker.pid, but only if
-# that pid still belongs to a powershell process (a reused pid is left alone).
-# macOS / Linux: stops a running `say` / espeak started by this user.
+# Windows only: kills the PowerShell speaker recorded in speaker.pid, and
+# only if that process's command line is still windows-say.ps1, so a reused
+# pid (for example the user's own PowerShell window) is never touched.
+# macOS / Linux: no-op, so it never kills speech started by anything else.
 
 PID_FILE="$HOME/.claude/claude-speak/speaker.pid"
 
@@ -16,15 +17,8 @@ case "$(uname -s)" in
     rm -f "$PID_FILE"
     [ -n "$pid" ] || exit 0
     powershell.exe -NoProfile -NonInteractive -Command \
-      "Get-Process -Id $pid -ErrorAction SilentlyContinue | Where-Object { \$_.ProcessName -eq 'powershell' } | Stop-Process -Force" \
+      "Get-CimInstance Win32_Process -Filter 'ProcessId=$pid' | Where-Object { \$_.CommandLine -like '*windows-say.ps1*' } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force }" \
       >/dev/null 2>&1
-    ;;
-  Darwin)
-    pkill -x say >/dev/null 2>&1
-    ;;
-  Linux)
-    pkill -x espeak-ng >/dev/null 2>&1
-    pkill -x espeak >/dev/null 2>&1
     ;;
 esac
 exit 0

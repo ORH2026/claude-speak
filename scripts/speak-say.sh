@@ -36,9 +36,11 @@ case "$backend" in
   windows)
     # Text goes to PowerShell on stdin, never to a file. -WindowStyle Hidden
     # keeps a console window from flashing up.
-    win_script="$(cygpath -w "$DIR/windows-say.ps1")"
-    printf '%s' "$text" | powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden \
-      -ExecutionPolicy Bypass -File "$win_script" -Wpm "${rate:-0}" -Voice "$voice" >/dev/null 2>&1 &
+    args=(-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass
+          -File "$(cygpath -w "$DIR/windows-say.ps1")")
+    [ -n "$rate" ] && args+=(-Wpm "$rate")
+    [ -n "$voice" ] && args+=(-Voice "$voice")
+    printf '%s' "$text" | powershell.exe "${args[@]}" >/dev/null 2>&1 &
     ;;
   macos)
     args=()
@@ -54,7 +56,7 @@ case "$backend" in
     "$espeak_bin" "${args[@]}" "$text" >/dev/null 2>&1 &
     ;;
   *)
-    echo "claude-speak: no supported TTS backend found (need macOS \`say\` or Linux \`espeak-ng\`/\`espeak\`)" >&2
+    echo "claude-speak: no supported TTS backend found (need macOS \`say\`, Linux \`espeak-ng\`/\`espeak\`, or Windows PowerShell)" >&2
     exit 0
     ;;
 esac

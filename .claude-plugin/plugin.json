@@ -8,6 +8,6 @@
   },
   "license": "MIT",
   "keywords": ["voice", "tts", "accessibility", "macos", "linux", "windows", "espeak", "say", "sapi"],
-  "homepage": "https://github.com/JosephScript/claude-speak",
+  "homepage": "https://github.com/ORH2026/claude-speak",
   "repository": "https://github.com/ORH2026/claude-speak"
 }
