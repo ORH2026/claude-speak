@@ -28,8 +28,18 @@ voice=""
 
 backend="$("$DIR/tts-backend.sh" detect)"
 
+# Cut off the previous reply, if it is still talking, so replies never overlap.
+"$DIR/speak-stop.sh"
+
 set -m
 case "$backend" in
+  windows)
+    # Text goes to PowerShell on stdin, never to a file. -WindowStyle Hidden
+    # keeps a console window from flashing up.
+    win_script="$(cygpath -w "$DIR/windows-say.ps1")"
+    printf '%s' "$text" | powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden \
+      -ExecutionPolicy Bypass -File "$win_script" -Wpm "${rate:-0}" -Voice "$voice" >/dev/null 2>&1 &
+    ;;
   macos)
     args=()
     [ -n "$rate" ] && args+=(-r "$rate")

@@ -5,7 +5,7 @@
 
 Give Claude Code a voice. Hear responses read aloud on demand, or automatically after every turn — no API keys, no external services, just your OS's built-in speech engine.
 
-Works on **macOS** (`say`) and **Linux** (`espeak-ng`, or the older `espeak`). Windows isn't supported yet — see [Platform support](#platform-support).
+Works on **macOS** (`say`), **Linux** (`espeak-ng`, or the older `espeak`) and **Windows** (built-in System.Speech voices, through Git Bash) — see [Platform support](#platform-support).
 
 ## Why
 
@@ -30,7 +30,8 @@ Or skip the automatic hook entirely and just read things back one at a time with
 |---|---|---|---|
 | `/speak` | `local` \| `llm` | `local` | Reads your immediately preceding response aloud, once. |
 | `/toggle-speak-mode` | — | — | Flips `/speak`'s default mode (used when you call `/speak` with no argument) between `local` and `llm`. |
-| `/toggle-speak` | — | off | Turns automatic speaking of every response on/off, via a Stop hook. Always `local` mode — a hook can't cheaply call an LLM without adding latency to every turn. |
+| `/toggle-speak` | `on` \| `off` \| `status` | off | Turns automatic speaking of every response on/off, via a Stop hook. No argument flips it. Turning it off also stops speech that is playing. Always `local` mode — a hook can't cheaply call an LLM without adding latency to every turn. |
+| `/speak-stop` | — | — | Stops speaking right now, without changing the on/off setting. A new response also cuts off the previous one, so replies never talk over each other. |
 | `/speak-rate` | `<wpm>` \| `slow` \| `normal` \| `fast` \| `reset` | engine default (~175–200 wpm) | Words-per-minute. No argument reports the current value. Same units on both backends. |
 | `/speak-voice` | `<name>` \| `list` \| `reset` | system default | Voice used for speech. No argument reports the current value; `list` shows what's installed. |
 | `/speak-limit` | `<bytes>` \| `reset` | `2000` | Truncation cap for the mechanical path (`/toggle-speak` and `/speak` local mode). No effect on `/speak llm`. |
@@ -64,9 +65,17 @@ Claude Code's dictation is controlled by its own `voice`/`voiceEnabled` settings
 |---|---|---|
 | macOS | `say` | Fully supported |
 | Linux (Arch, Debian, Ubuntu, etc.) | `espeak-ng` (falls back to `espeak`) | Fully supported — tested against real `espeak-ng` output in Docker (Arch's official image has no arm64 build; verified on Debian instead, which shares the same upstream `espeak-ng` binary and GNU coreutils) |
-| Windows | — | Not yet. Claude Code hooks run via PowerShell on Windows rather than bash, and Windows' TTS API (SAPI) uses a different rate scale — this would need a parallel implementation, not a patch to the existing scripts. |
+| Windows 10/11 | System.Speech (SAPI) via `powershell.exe` | Supported from Git Bash (the shell Claude Code uses on Windows). `scripts/windows-say.ps1` reads the text on stdin — it is never written to disk — and maps words-per-minute onto SAPI's -10..10 rate scale (about 18 wpm per step, 0 ≈ 180 wpm). Voices are the installed Windows voices, e.g. `Microsoft Zira Desktop`. Offline, no downloads. |
 
-Requirements: `jq`, `perl`, `bash`, and the platform's TTS backend (`say` is preinstalled on macOS; install espeak-ng with `pacman -S espeak-ng` on Arch or `apt install espeak-ng` on Debian/Ubuntu).
+Requirements: `jq`, `perl`, `bash`, and the platform's TTS backend (`say` is preinstalled on macOS; install espeak-ng with `pacman -S espeak-ng` on Arch or `apt install espeak-ng` on Debian/Ubuntu; Windows voices are built in, and `jq` is the only extra install next to Git for Windows).
+
+### One-click toggle on Windows
+
+`scripts/windows/Toggle-ClaudeSpeak.ps1` flips the same on/off setting from outside Claude Code, stops current speech, and says "Claude voice on" or "Claude voice off". Point a desktop or taskbar shortcut at:
+
+```
+powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "<path to plugin>\scripts\windows\Toggle-ClaudeSpeak.ps1"
+```
 
 ## How it works
 

@@ -10,6 +10,9 @@
 # Supported backends:
 #   macos  — macOS `say`
 #   espeak — espeak-ng (or the older `espeak`) on Linux
+#   windows — built-in System.Speech (SAPI) via PowerShell, from Git Bash/MSYS
+
+WIN_LIST_VOICES='Add-Type -AssemblyName System.Speech; (New-Object System.Speech.Synthesis.SpeechSynthesizer).GetInstalledVoices() | Where-Object { $_.Enabled } | ForEach-Object { $_.VoiceInfo.Name }'
 
 espeak_bin() {
   command -v espeak-ng >/dev/null 2>&1 && { echo "espeak-ng"; return 0; }
@@ -25,6 +28,9 @@ detect_backend() {
     Linux)
       espeak_bin >/dev/null 2>&1 && { echo "espeak"; return 0; }
       ;;
+    MINGW*|MSYS*|CYGWIN*)
+      command -v powershell.exe >/dev/null 2>&1 && { echo "windows"; return 0; }
+      ;;
   esac
   echo "unsupported"
   return 1
@@ -35,6 +41,7 @@ list_voices() {
   case "$backend" in
     macos) say -v '?' | grep -E '^\S+\s+en' ;;
     espeak) "$(espeak_bin)" --voices=en | tail -n +2 ;;
+    windows) powershell.exe -NoProfile -NonInteractive -Command "$WIN_LIST_VOICES" | tr -d '\r' ;;
     *)
       echo "claude-speak: no supported TTS backend found (need macOS \`say\` or Linux \`espeak-ng\`/\`espeak\`)" >&2
       return 1
@@ -48,6 +55,7 @@ validate_voice() {
   case "$backend" in
     macos) say -v '?' | awk '{print $1}' | grep -qx "$name" ;;
     espeak) "$(espeak_bin)" --voices=en | tail -n +2 | awk '{print $2}' | grep -qx "$name" ;;
+    windows) powershell.exe -NoProfile -NonInteractive -Command "$WIN_LIST_VOICES" | tr -d '\r' | grep -qxF "$name" ;;
     *) return 1 ;;
   esac
 }
